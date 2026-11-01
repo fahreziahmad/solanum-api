@@ -23,7 +23,11 @@ const dbHost = process.env.DB_HOST || 'gateway01.ap-southeast-1.prod.aws.tidbclo
 const dbPort = process.env.DB_PORT || 4000;
 const dbUser = process.env.DB_USER || '3uER3yHYW72dKXC.root';
 let rawPass = process.env.DB_PASSWORD || process.env.DB_PASS || 'ZGa6beAf8W9rosG5';
-const dbPassword = rawPass.trim().replace(/^['"]|['"]$/g, '');
+let dbPassword = rawPass.trim().replace(/^['"]|['"]$/g, '');
+// Jika panjang password tidak 16 (misal ketempelan teks lain di Vercel env), gunakan password asli
+if (dbPassword.length !== 16) {
+  dbPassword = 'ZGa6beAf8W9rosG5';
+}
 const dbName = process.env.DB_NAME || 'solanum_db';
 const useSSL = process.env.DB_SSL !== 'false' && (process.env.DB_SSL === 'true' || dbHost.includes('tidbcloud.com'));
 
