@@ -1,3 +1,7 @@
 node_modules/
 .env
 
+
+init_db.js
+solanum_db.sql
+solanum_db_dump.sql
