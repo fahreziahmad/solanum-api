@@ -22,7 +22,8 @@ app.use('/uploads', express.static(uploadsPath));
 const dbHost = process.env.DB_HOST || 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com';
 const dbPort = process.env.DB_PORT || 4000;
 const dbUser = process.env.DB_USER || '3uER3yHYW72dKXC.root';
-const dbPassword = process.env.DB_PASSWORD || process.env.DB_PASS || 'ZGa6beAf8W9rosG5';
+let rawPass = process.env.DB_PASSWORD || process.env.DB_PASS || 'ZGa6beAf8W9rosG5';
+const dbPassword = rawPass.trim().replace(/^['"]|['"]$/g, '');
 const dbName = process.env.DB_NAME || 'solanum_db';
 const useSSL = process.env.DB_SSL !== 'false' && (process.env.DB_SSL === 'true' || dbHost.includes('tidbcloud.com'));
 
@@ -66,7 +67,9 @@ app.get('/api/debug-db', async (req, res) => {
       totalUsers: userCount[0].total,
       host: dbHost,
       db: dbName,
-      user: dbUser
+      user: dbUser,
+      passLen: dbPassword.length,
+      passPrefix: dbPassword.substring(0, 3)
     });
   } catch (err) {
     res.status(500).json({
@@ -76,7 +79,9 @@ app.get('/api/debug-db', async (req, res) => {
       errno: err.errno,
       host: dbHost,
       db: dbName,
-      user: dbUser
+      user: dbUser,
+      passLen: dbPassword.length,
+      passPrefix: dbPassword.substring(0, 3)
     });
   }
 });
