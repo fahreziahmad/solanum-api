@@ -14,7 +14,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Folder static untuk akses foto yang diunggah
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Di Vercel, serve dari /tmp/uploads
+const uploadsPath = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadsPath));
 
 // Koneksi ke Database TiDB Cloud (Bisa di-override lewat Environment Variables)
 const dbHost = process.env.DB_HOST || 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com';
@@ -37,13 +39,14 @@ const pool = mysql.createPool({
 });
 
 // Konfigurasi Multer
+// Di Vercel, gunakan /tmp karena filesystem read-only
+const uploadDir = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const dir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(dir)){
-        fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(uploadDir)){
+        fs.mkdirSync(uploadDir, { recursive: true });
     }
-    cb(null, dir);
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -1048,6 +1051,11 @@ app.get('/api/admin/conversations', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`[🚀] Solanum API Server berjalan di http://localhost:${port}`);
-});
+// Hanya listen jika bukan di Vercel (Vercel handle sendiri)
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`[🚀] Solanum API Server berjalan di http://localhost:${port}`);
+  });
+}
+
+module.exports = app;
