@@ -16,6 +16,20 @@ app.use(express.urlencoded({ extended: true }));
 // Folder static untuk akses foto yang diunggah
 // Di Vercel, serve dari /tmp/uploads
 const uploadsPath = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'uploads');
+
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'Selamat datang di API Solanum! Backend berjalan dengan baik di cloud.',
+    endpoints: {
+      login: 'POST /api/login',
+      register: 'POST /api/register',
+      users: 'GET /api/admin/users',
+      debug: 'GET /api/debug-db'
+    }
+  });
+});
+
 app.use('/uploads', express.static(uploadsPath));
 
 // Koneksi ke Database TiDB Cloud (Bisa di-override lewat Environment Variables)
