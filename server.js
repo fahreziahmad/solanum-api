@@ -22,7 +22,7 @@ app.use('/uploads', express.static(uploadsPath));
 const dbHost = process.env.DB_HOST || 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com';
 const dbPort = process.env.DB_PORT || 4000;
 const dbUser = process.env.DB_USER || '3uER3yHYW72dKXC.root';
-const dbPassword = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'ZGa6beAf8W9rosG5';
+const dbPassword = process.env.DB_PASSWORD || process.env.DB_PASS || 'ZGa6beAf8W9rosG5';
 const dbName = process.env.DB_NAME || 'solanum_db';
 const useSSL = process.env.DB_SSL !== 'false' && (process.env.DB_SSL === 'true' || dbHost.includes('tidbcloud.com'));
 
@@ -32,9 +32,9 @@ const pool = mysql.createPool({
   user: dbUser,
   password: dbPassword,
   database: dbName,
-  ssl: useSSL ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : false,
+  ssl: useSSL ? { minVersion: 'TLSv1.2', rejectUnauthorized: false } : false,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5, connectTimeout: 15000,
   queueLimit: 0
 });
 
@@ -55,6 +55,32 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // ==========================================
+
+app.get('/api/debug-db', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT 1 + 1 AS solution');
+    const [userCount] = await pool.query('SELECT COUNT(*) AS total FROM users');
+    res.json({
+      status: 'connected',
+      solution: rows[0].solution,
+      totalUsers: userCount[0].total,
+      host: dbHost,
+      db: dbName,
+      user: dbUser
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      message: err.message,
+      code: err.code,
+      errno: err.errno,
+      host: dbHost,
+      db: dbName,
+      user: dbUser
+    });
+  }
+});
+
 // 1. API PENGGUNA (USERS)
 // ==========================================
 
